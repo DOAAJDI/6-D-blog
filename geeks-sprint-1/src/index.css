@@ -24,10 +24,15 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
+  /* Removed flex and centering */
   min-width: 320px;
   min-height: 100vh;
+  background-color: #242424;
+}
+
+/* Optional: Add some layout spacing */
+main {
+  padding: 2rem;
 }
 
 h1 {
