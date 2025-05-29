@@ -13,7 +13,7 @@ export default function Sidebar() {
           <PenTool size={18} /> New Post
         </Link>
         <Link to="/login" className="flex items-center gap-2 mt-auto hover:text-red-400">
-          <LogOut size={18} /> Logout
+          <LogOut size={18} /> Logoutt
         </Link>
       </nav>
     </aside>
