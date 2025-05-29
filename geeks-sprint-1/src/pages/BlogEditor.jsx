@@ -1,90 +1,251 @@
-import { useState } from "react";
-import { ImagePlus, Trash2, Send } from "lucide-react";
+import React, { useState, useRef } from 'react';
+import { Camera, Image, Trash2, Edit, Calendar, User } from 'lucide-react';
 
-export default function BlogEditor() {
-  const [postText, setPostText] = useState("");
-  const [image, setImage] = useState(null);
+const BlogEditor = () => {
+  const [posts, setPosts] = useState([]);
+  const [currentPost, setCurrentPost] = useState({
+    title: '',
+    content: '',
+    image: null,
+    imagePreview: null
+  });
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const fileInputRef = useRef(null);
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
     if (file) {
-      setImage(URL.createObjectURL(file)); // Just preview, not actual upload
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setCurrentPost(prev => ({
+          ...prev,
+          image: file,
+          imagePreview: e.target.result
+        }));
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  const handlePost = () => {
-    if (!postText.trim() && !image) {
-      alert("Please write something or upload an image.");
-      return;
+  const handleSubmit = () => {
+    if (!currentPost.content.trim()) return;
+
+    const newPost = {
+      id: isEditing ? editingId : Date.now(),
+      title: currentPost.title || "Sans titre",
+      content: currentPost.content,
+      image: currentPost.imagePreview,
+      createdAt: new Date().toLocaleDateString('fr-FR'),
+      author: "Auteur"
+    };
+
+    if (isEditing) {
+      setPosts(posts.map(post => post.id === editingId ? newPost : post));
+      setIsEditing(false);
+      setEditingId(null);
+    } else {
+      setPosts([newPost, ...posts]);
     }
 
-    console.log("New post:", { postText, image });
-    alert("✅ Post submitted!");
-    setPostText("");
-    setImage(null);
+    // Reset form
+    setCurrentPost({
+      title: '',
+      content: '',
+      image: null,
+      imagePreview: null
+    });
   };
 
-  const handleDelete = () => {
-    setPostText("");
-    setImage(null);
+  const handleEdit = (post) => {
+    setCurrentPost({
+      title: post.title,
+      content: post.content,
+      image: null,
+      imagePreview: post.image
+    });
+    setIsEditing(true);
+    setEditingId(post.id);
+  };
+
+  const handleDelete = (id) => {
+    setPosts(posts.filter(post => post.id !== id));
+  };
+
+  const cancelEdit = () => {
+    setCurrentPost({
+      title: '',
+      content: '',
+      image: null,
+      imagePreview: null
+    });
+    setIsEditing(false);
+    setEditingId(null);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 flex justify-center items-center p-6">
-      <div className="w-full max-w-2xl bg-white shadow-lg rounded-xl p-6 space-y-4 border border-gray-200">
-        <h2 className="text-2xl font-bold text-gray-800 text-center mb-2">📝 Create a New Post</h2>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-800 mb-2">✏️ Mon Blog</h1>
+          <p className="text-gray-600">Créez et partagez vos articles</p>
+        </div>
 
-        {/* Post Text Area */}
-        <textarea
-          value={postText}
-          onChange={(e) => setPostText(e.target.value)}
-          placeholder="What's on your mind?"
-          className="w-full min-h-[120px] p-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-400 resize-none"
-        />
-
-        {/* Image Upload */}
-        <div className="flex items-center justify-between">
-          <label
-            htmlFor="image-upload"
-            className="flex items-center gap-2 cursor-pointer text-purple-600 hover:text-purple-800"
-          >
-            <ImagePlus className="w-5 h-5" />
-            Add Image
-          </label>
+        {/* Editor Section */}
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-8 border border-gray-200">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-6">
+            {isEditing ? '✏️ Modifier le Post' : '📝 Créer un Nouveau Post'}
+          </h2>
+          
+          {/* Title Input */}
           <input
-            id="image-upload"
-            type="file"
-            accept="image/*"
-            onChange={handleImageUpload}
-            className="hidden"
+            type="text"
+            placeholder="Titre de votre article..."
+            value={currentPost.title}
+            onChange={(e) => setCurrentPost(prev => ({...prev, title: e.target.value}))}
+            className="w-full p-4 mb-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none text-lg font-medium"
           />
 
-          <div className="flex gap-2">
-            <button
-              onClick={handleDelete}
-              className="flex items-center gap-2 text-sm text-red-600 border border-red-500 px-4 py-2 rounded-md hover:bg-red-100 transition"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete
-            </button>
+          {/* Content Textarea */}
+          <textarea
+            placeholder="Qu'avez-vous en tête ?"
+            value={currentPost.content}
+            onChange={(e) => setCurrentPost(prev => ({...prev, content: e.target.value}))}
+            className="w-full h-32 p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none resize-none text-gray-700"
+          />
 
-            <button
-              onClick={handlePost}
-              className="flex items-center gap-2 text-sm text-white bg-purple-600 px-4 py-2 rounded-md hover:bg-purple-700 transition"
-            >
-              <Send className="w-4 h-4" />
-              Post
-            </button>
+          {/* Image Preview */}
+          {currentPost.imagePreview && (
+            <div className="mt-4 relative">
+              <img 
+                src={currentPost.imagePreview} 
+                alt="Preview" 
+                className="w-full h-48 object-cover rounded-xl"
+              />
+              <button
+                onClick={() => setCurrentPost(prev => ({...prev, image: null, imagePreview: null}))}
+                className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex justify-between items-center mt-6">
+            <div className="flex gap-3">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImageUpload}
+                accept="image/*"
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-xl hover:bg-purple-200 transition-colors"
+              >
+                <Image size={20} />
+                Ajouter Image
+              </button>
+            </div>
+
+            <div className="flex gap-3">
+              {isEditing && (
+                <button
+                  onClick={cancelEdit}
+                  className="px-6 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors"
+                >
+                  Annuler
+                </button>
+              )}
+              <button
+                onClick={handleSubmit}
+                disabled={!currentPost.content.trim()}
+                className="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isEditing ? 'Mettre à jour' : 'Publier'}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Preview */}
-        {image && (
-          <div className="mt-4">
-            <img src={image} alt="preview" className="rounded-md w-full object-cover max-h-80" />
-          </div>
-        )}
+        {/* Posts Display */}
+        <div className="space-y-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">
+            📚 Articles Publiés ({posts.length})
+          </h2>
+          
+          {posts.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-2xl shadow-lg">
+              <div className="text-6xl mb-4">📝</div>
+              <p className="text-gray-500 text-lg">Aucun article publié pour le moment</p>
+              <p className="text-gray-400">Créez votre premier post ci-dessus !</p>
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {posts.map((post) => (
+                <div key={post.id} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
+                  {/* Image */}
+                  {post.image && (
+                    <div className="h-48 overflow-hidden">
+                      <img 
+                        src={post.image} 
+                        alt={post.title}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Content */}
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold text-gray-800 mb-2 line-clamp-2">
+                      {post.title}
+                    </h3>
+                    
+                    <p className="text-gray-600 mb-4 line-clamp-3">
+                      {post.content}
+                    </p>
+                    
+                    {/* Meta Info */}
+                    <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                      <div className="flex items-center gap-1">
+                        <User size={14} />
+                        {post.author}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Calendar size={14} />
+                        {post.createdAt}
+                      </div>
+                    </div>
+                    
+                    {/* Actions */}
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => handleEdit(post)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Modifier"
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(post.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Supprimer"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default BlogEditor;
