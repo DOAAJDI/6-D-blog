@@ -1,72 +1,89 @@
 import { useState } from "react";
-import { ImagePlus, UploadCloud } from "lucide-react";
+import { ImagePlus, Trash2, Send } from "lucide-react";
 
 export default function BlogEditor() {
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
+  const [postText, setPostText] = useState("");
   const [image, setImage] = useState(null);
 
-  const handlePostSubmit = () => {
-    if (!title || !body) {
-      alert("Please fill out both title and content.");
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImage(URL.createObjectURL(file)); // Just preview, not actual upload
+    }
+  };
+
+  const handlePost = () => {
+    if (!postText.trim() && !image) {
+      alert("Please write something or upload an image.");
       return;
     }
 
-    // Simulate sending post to backend
-    console.log("New Post:", { title, body, image });
-    alert("Post created!");
+    console.log("New post:", { postText, image });
+    alert("✅ Post submitted!");
+    setPostText("");
+    setImage(null);
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImage(URL.createObjectURL(file));
-    }
+  const handleDelete = () => {
+    setPostText("");
+    setImage(null);
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-3xl mx-auto bg-white shadow-md rounded-xl p-6">
-        <h1 className="text-2xl font-bold mb-4">Create a New Post</h1>
+    <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 flex justify-center items-center p-6">
+      <div className="w-full max-w-2xl bg-white shadow-lg rounded-xl p-6 space-y-4 border border-gray-200">
+        <h2 className="text-2xl font-bold text-gray-800 text-center mb-2">📝 Create a New Post</h2>
 
-        {/* Title Input */}
-        <input
-          type="text"
-          placeholder="Post title..."
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full mb-4 p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-
-        {/* Body Input */}
+        {/* Post Text Area */}
         <textarea
-          rows="8"
-          placeholder="Write your post here..."
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          className="w-full mb-4 p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          value={postText}
+          onChange={(e) => setPostText(e.target.value)}
+          placeholder="What's on your mind?"
+          className="w-full min-h-[120px] p-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-400 resize-none"
         />
 
         {/* Image Upload */}
-        <div className="flex items-center gap-4 mb-4">
-          <label className="flex items-center gap-2 cursor-pointer text-blue-600 hover:underline">
+        <div className="flex items-center justify-between">
+          <label
+            htmlFor="image-upload"
+            className="flex items-center gap-2 cursor-pointer text-purple-600 hover:text-purple-800"
+          >
             <ImagePlus className="w-5 h-5" />
-            <span>Add Image</span>
-            <input type="file" accept="image/*" onChange={handleImageChange} hidden />
+            Add Image
           </label>
-          {image && (
-            <img src={image} alt="preview" className="h-20 rounded shadow border" />
-          )}
+          <input
+            id="image-upload"
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            className="hidden"
+          />
+
+          <div className="flex gap-2">
+            <button
+              onClick={handleDelete}
+              className="flex items-center gap-2 text-sm text-red-600 border border-red-500 px-4 py-2 rounded-md hover:bg-red-100 transition"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete
+            </button>
+
+            <button
+              onClick={handlePost}
+              className="flex items-center gap-2 text-sm text-white bg-purple-600 px-4 py-2 rounded-md hover:bg-purple-700 transition"
+            >
+              <Send className="w-4 h-4" />
+              Post
+            </button>
+          </div>
         </div>
 
-        {/* Post Button */}
-        <button
-          onClick={handlePostSubmit}
-          className="flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-all"
-        >
-          <UploadCloud className="w-5 h-5" />
-          Post
-        </button>
+        {/* Preview */}
+        {image && (
+          <div className="mt-4">
+            <img src={image} alt="preview" className="rounded-md w-full object-cover max-h-80" />
+          </div>
+        )}
       </div>
     </div>
   );
